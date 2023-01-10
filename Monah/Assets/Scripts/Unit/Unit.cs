@@ -7,16 +7,20 @@ using DG.Tweening;
 public class Unit : MonoBehaviour
 {
     [SerializeField] private UnitСharacteristics _characteristics;
-    [field: SerializeField] public Point StartPoint { get; private set; }
-
     private Point _currentPoint;
-
     private bool _canChangePath;
+
+    [field: SerializeField] public Point StartPoint { get; private set; }
     public float CollectedMoney;
 
+    public event Action<object> CollectedMoneyValueChanged;
+    public event Action<object> MaxMoneyValueChanged;
+    
     private void Start()
     {
         _currentPoint = StartPoint;
+        CollectedMoneyValueChanged?.Invoke(CollectedMoney);
+        MaxMoneyValueChanged?.Invoke(_characteristics.MaxMoney);
         StartCoroutine(Moving());
     }
 
@@ -40,12 +44,14 @@ public class Unit : MonoBehaviour
                 _currentPoint.Colony.CanEarnMoney = true;
                 yield break;
             }
+
             if (collectedMoneyFromThisColony + _characteristics.CollectMoneyPerSecond >
                 _characteristics.MaxMoneyFromOneColony)
                 break;
             collectedMoneyFromThisColony += _characteristics.CollectMoneyPerSecond;
             CollectedMoney += _characteristics.CollectMoneyPerSecond;
             colony.CurrentMoney -= _characteristics.CollectMoneyPerSecond;
+            CollectedMoneyValueChanged?.Invoke(CollectedMoney);
             Debug.Log("Current collected money - " + CollectedMoney);
             Debug.Log("Current collected money from this colony - " + collectedMoneyFromThisColony);
             yield return new WaitForSeconds(1);
@@ -71,7 +77,7 @@ public class Unit : MonoBehaviour
             }
         }
     }
-    
+
     private void MoveByPath(Point point, Action onPointReached)
     {
         _canChangePath = false;
@@ -84,7 +90,7 @@ public class Unit : MonoBehaviour
 
     private void OnPointReached()
     {
-        _currentPoint.UnitEntered?.Invoke(this); 
+        _currentPoint.UnitEntered?.Invoke(this);
         _currentPoint.Colony.CanEarnMoney = false;
         StartCoroutine(CollectMoneyFromColony(_currentPoint.Colony));
     }
@@ -92,11 +98,6 @@ public class Unit : MonoBehaviour
     public void SpendAllCollectedMoney()
     {
         CollectedMoney = 0;
-        DataChanged();
-    }
-    
-    public void DataChanged()
-    {
-        
+        CollectedMoneyValueChanged?.Invoke(CollectedMoney);
     }
 }

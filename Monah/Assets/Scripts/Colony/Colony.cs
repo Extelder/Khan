@@ -5,13 +5,37 @@ using UnityEngine;
 
 public class Colony : MonoBehaviour
 {
-    [field: SerializeField] public float CurrentMoney { get; set; }
-    [field: SerializeField] public float MaxMoney { get; private set; }
+
+    public float CurrentMoney
+    {
+        get{}
+        set
+        {
+            CurrentMoneyValueChanged?.Invoke(value);
+        }
+    }
+        
+
+    [field: SerializeField]
+    public float MaxMoney
+    {
+        get => MaxMoney;
+        private set
+        {
+            this.MaxMoney = value;
+            MaxMoneyValueChanged?.Invoke(MaxMoney);
+        }
+    }
+
     [field: SerializeField] public float MoneyRate { get; private set; }
     [field: SerializeField] public float EarnMoneyPerRate { get; private set; }
 
     public bool CanEarnMoney = true;
-    
+    [SerializeField] private float currentMoney;
+
+    public event Action<object> CurrentMoneyValueChanged;
+    public event Action<object> MaxMoneyValueChanged;
+
     private void Start()
     {
         StartCoroutine(EarnMoney());
